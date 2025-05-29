@@ -139,7 +139,7 @@ const generateGeminiResponse = async (entry, category) => {
       return getFallbackResponse(category);
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     
     const prompt = `You are an intelligent journal companion. A user just wrote this ${category} entry: "${entry}"
 
@@ -293,7 +293,7 @@ Respond as a helpful friend, not a therapist.`;
         <h1 className="text-3xl font-bold text-gray-800 mb-2">AI Journal & Idea Tracker</h1>
         <p className="text-gray-600">Your intelligent companion for capturing thoughts, ideas, and achievements</p>
         <div className="mt-2 text-sm text-gray-500">
-          {isGenerating ? "🤖 AI is thinking..." : "Powered by Ollama (llama3.2:3b)"}
+          {isGenerating ? "🤖 AI is thinking..." : "Powered by Ollama (llama3.2:3b) and Gemini 2.0 Flash"}
         </div>
       </div>
 
