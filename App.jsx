@@ -139,7 +139,7 @@ const generateGeminiResponse = async (entry, category) => {
       return getFallbackResponse(category);
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro-preview" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
     
     const prompt = `You are an intelligent journal companion. A user just wrote this ${category} entry: "${entry}"
 
@@ -293,7 +293,7 @@ Respond as a helpful friend, not a therapist.`;
         <h1 className="text-3xl font-bold text-gray-800 mb-2">AI Journal & Idea Tracker</h1>
         <p className="text-gray-600">Your intelligent companion for capturing thoughts, ideas, and achievements</p>
         <div className="mt-2 text-sm text-gray-500">
-          {isGenerating ? "🤖 AI is thinking..." : "Powered by Ollama (llama3.2:3b) & Gemini 2.5 Pro"}
+          {isGenerating ? "🤖 AI is thinking..." : "Powered by Ollama (llama3.2:3b) & Gemini 2.0 Flash"}
         </div>
       </div>
 
@@ -442,8 +442,10 @@ Respond as a helpful friend, not a therapist.`;
               
               <div className="bg-white bg-opacity-70 rounded-lg p-3 border border-gray-200">
                 <div className="flex items-start space-x-2">
-                  {(entry.ai_response?.length > 100 && !entry.ai_response?.includes('🎉') && !entry.ai_response?.includes('💡')) ? 
+                  {{window.location.hostname === 'localhost' && (entry.ai_response?.length > 100 && !entry.ai_response?.includes('🎉')) ? 
   <span className="text-lg">🦙</span> : 
+  window.location.hostname !== 'localhost' && (entry.ai_response?.length > 100 && !entry.ai_response?.includes('🎉')) ?
+  <span className="text-lg">💎</span> :
   <Brain className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
 }
                   <div>
