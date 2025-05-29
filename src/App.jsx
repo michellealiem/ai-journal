@@ -45,12 +45,15 @@ const AIJournal = () => {
     }
   };
 
-  const categorizeEntry = (text) => {
+  // Keyword-based fallback categorization
+  const keywordCategorize = (text) => {
     const lowerText = text.toLowerCase();
     
     if (lowerText.includes('achieved') || lowerText.includes('completed') || lowerText.includes('success') || 
         lowerText.includes('won') || lowerText.includes('accomplished') || lowerText.includes('milestone') ||
-        lowerText.includes('breakthrough') || lowerText.includes('victory') || lowerText.includes('finished')) {
+        lowerText.includes('breakthrough') || lowerText.includes('victory') || lowerText.includes('finished') ||
+        lowerText.includes('built') || lowerText.includes('deployed') || lowerText.includes('did it') ||
+        lowerText.includes('done') || lowerText.includes('solved')) {
       return 'win';
     }
     
@@ -67,6 +70,87 @@ const AIJournal = () => {
     }
     
     return 'reflection';
+  };
+
+  // AI-powered categorization
+  const categorizeEntry = async (text) => {
+    const isLocal = window.location.hostname === 'localhost';
+    
+    try {
+      if (isLocal) {
+        // Use Ollama for local categorization
+        const response = await fetch('http://localhost:11434/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'llama3.2:3b',
+            prompt: `Categorize this journal entry into exactly one of these categories: "win", "idea", "learning", or "reflection"
+
+Entry: "${text}"
+
+Rules:
+- "win" = achievements, accomplishments, completions, successes, breakthroughs, finishing projects, solving problems, deployments
+- "idea" = concepts, brainstorms, possibilities, innovations, "what if" thoughts, creative suggestions
+- "learning" = insights, discoveries, knowledge gained, understanding, research findings, lessons learned
+- "reflection" = general thoughts, observations, feelings, contemplations, philosophical musings
+
+Examples:
+- "We built this app!" = win
+- "I deployed the project successfully" = win
+- "What if we used AI for categorization?" = idea
+- "I learned how to use React hooks" = learning
+- "Today was interesting" = reflection
+
+Respond with ONLY the category name (win/idea/learning/reflection), nothing else.`,
+            stream: false,
+            options: {
+              temperature: 0.1,
+              max_tokens: 10
+            }
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const category = data.response?.trim().toLowerCase();
+          if (['win', 'idea', 'learning', 'reflection'].includes(category)) {
+            return category;
+          }
+        }
+      } else if (genAI) {
+        // Use Gemini for cloud categorization
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const result = await model.generateContent(`Categorize this journal entry into exactly one of these categories: "win", "idea", "learning", or "reflection"
+
+Entry: "${text}"
+
+Rules:
+- "win" = achievements, accomplishments, completions, successes, breakthroughs, finishing projects, solving problems, deployments
+- "idea" = concepts, brainstorms, possibilities, innovations, "what if" thoughts, creative suggestions  
+- "learning" = insights, discoveries, knowledge gained, understanding, research findings, lessons learned
+- "reflection" = general thoughts, observations, feelings, contemplations, philosophical musings
+
+Examples:
+- "We built this app!" = win
+- "I deployed the project successfully" = win
+- "What if we used AI for categorization?" = idea
+- "I learned how to use React hooks" = learning
+- "Today was interesting" = reflection
+
+Respond with ONLY the category name (win/idea/learning/reflection), nothing else.`);
+        
+        const category = result.response.text()?.trim().toLowerCase();
+        if (['win', 'idea', 'learning', 'reflection'].includes(category)) {
+          return category;
+        }
+      }
+    } catch (error) {
+      console.error('AI categorization failed:', error);
+    }
+    
+    // Fallback to keyword matching
+    console.log('Using fallback categorization for:', text);
+    return keywordCategorize(text);
   };
 
   // Real AI responses using Llama (local) vs Gemini (cloud)
@@ -187,13 +271,14 @@ Respond as a helpful friend, not a therapist.`;
   const addEntry = async () => {
     if (!newEntry.trim()) return;
     
-    const category = categorizeEntry(newEntry);
     setIsGenerating(true);
-    
-    // Show loading state
     setAiResponse("🤖 Thinking...");
     
     try {
+      // Get AI categorization
+      const category = await categorizeEntry(newEntry);
+      console.log('AI categorized as:', category);
+      
       // Get AI response
       const response = await generateAIResponse(newEntry, category);
       
@@ -282,7 +367,7 @@ Respond as a helpful friend, not a therapist.`;
         <h1 className="text-3xl font-bold text-gray-800 mb-2">AI Journal & Idea Tracker</h1>
         <p className="text-gray-600">Your intelligent companion for capturing thoughts, ideas, and achievements</p>
         <div className="mt-2 text-sm text-gray-500">
-          {isGenerating ? "🤖 AI is thinking..." : "Powered by Ollama (llama3.2:3b) & Gemini 1.5 Flash"}
+          {isGenerating ? "🤖 AI is thinking..." : "Powered by Ollama (Llama3.2:3b) & Gemini 1.5 Flash with AI Categorization"}
         </div>
       </div>
 
@@ -350,7 +435,7 @@ Respond as a helpful friend, not a therapist.`;
           </button>
         </div>
         <div className="text-xs text-gray-500 mt-2">
-          Tip: Press Cmd/Ctrl + Enter to quick-add
+          Tip: Press Cmd/Ctrl + Enter to quick-add | AI-powered categorization
         </div>
       </div>
 
