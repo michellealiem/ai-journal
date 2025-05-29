@@ -22,10 +22,9 @@ const AIJournal = () => {
   const [loading, setLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
 
-useEffect(() => {
-  loadEntries();
-  testConnection(); // Add this line
-}, []);
+  useEffect(() => {
+    loadEntries();
+  }, []);
 
   const loadEntries = async () => {
     try {
@@ -45,16 +44,6 @@ useEffect(() => {
       setLoading(false);
     }
   };
-
-  const testConnection = async () => {
-  console.log('Testing connection...');
-  try {
-    const { data, error } = await supabase.from('journal_entries').select('*');
-    console.log('Connection test result:', { data, error });
-  } catch (err) {
-    console.log('Connection error:', err);
-  }
-};
 
   const categorizeEntry = (text) => {
     const lowerText = text.toLowerCase();
@@ -81,19 +70,19 @@ useEffect(() => {
   };
 
   // Real AI responses using Llama (local) vs Gemini (cloud)
-const generateAIResponse = async (entry, category) => {
-  const isLocal = window.location.hostname === 'localhost';
-  
-  if (isLocal) {
-    return await generateOllamaResponse(entry, category);
-  } else {
-    return await generateGeminiResponse(entry, category);
-  }
-};
+  const generateAIResponse = async (entry, category) => {
+    const isLocal = window.location.hostname === 'localhost';
+    
+    if (isLocal) {
+      return await generateOllamaResponse(entry, category);
+    } else {
+      return await generateGeminiResponse(entry, category);
+    }
+  };
 
-const generateOllamaResponse = async (entry, category) => {
-  try {
-    const prompt = `You are an intelligent journal companion. A user just wrote this ${category} entry: "${entry}"
+  const generateOllamaResponse = async (entry, category) => {
+    try {
+      const prompt = `You are an intelligent journal companion. A user just wrote this ${category} entry: "${entry}"
 
 Please provide a thoughtful, encouraging response that:
 - Acknowledges their ${category}
@@ -104,44 +93,44 @@ Please provide a thoughtful, encouraging response that:
 
 Respond as a helpful friend, not a therapist.`;
 
-    const response = await fetch('http://localhost:11434/api/generate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama3.2:3b',
-        prompt: prompt,
-        stream: false,
-        options: {
-          temperature: 0.7,
-          max_tokens: 150
-        }
-      })
-    });
+      const response = await fetch('http://localhost:11434/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama3.2:3b',
+          prompt: prompt,
+          stream: false,
+          options: {
+            temperature: 0.7,
+            max_tokens: 150
+          }
+        })
+      });
 
-    if (!response.ok) {
-      throw new Error('Ollama request failed');
-    }
+      if (!response.ok) {
+        throw new Error('Ollama request failed');
+      }
 
-    const data = await response.json();
-    return data.response || getFallbackResponse(category);
-    
-  } catch (error) {
-    console.error('Ollama error:', error);
-    return getFallbackResponse(category);
-  }
-};
-
-const generateGeminiResponse = async (entry, category) => {
-  try {
-    if (!genAI) {
+      const data = await response.json();
+      return data.response || getFallbackResponse(category);
+      
+    } catch (error) {
+      console.error('Ollama error:', error);
       return getFallbackResponse(category);
     }
+  };
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-    
-    const prompt = `You are an intelligent journal companion. A user just wrote this ${category} entry: "${entry}"
+  const generateGeminiResponse = async (entry, category) => {
+    try {
+      if (!genAI) {
+        return getFallbackResponse(category);
+      }
+
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      
+      const prompt = `You are an intelligent journal companion. A user just wrote this ${category} entry: "${entry}"
 
 Please provide a thoughtful, encouraging response that:
 - Acknowledges their ${category}
@@ -152,17 +141,17 @@ Please provide a thoughtful, encouraging response that:
 
 Respond as a helpful friend, not a therapist.`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text() || getFallbackResponse(category);
-    
-  } catch (error) {
-    console.error('Gemini error:', error);
-    return getFallbackResponse(category);
-  }
-};
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      return response.text() || getFallbackResponse(category);
+      
+    } catch (error) {
+      console.error('Gemini error:', error);
+      return getFallbackResponse(category);
+    }
+  };
 
-  // Fallback responses if Ollama is unavailable
+  // Fallback responses if AI is unavailable
   const getFallbackResponse = (category) => {
     const fallbackResponses = {
       win: [
@@ -205,16 +194,16 @@ Respond as a helpful friend, not a therapist.`;
     setAiResponse("🤖 Thinking...");
     
     try {
-  // Get AI response
-  const response = await generateAIResponse(newEntry, category);
-  
-  const entry = {
-    text: newEntry,
-    category,
-    timestamp: new Date().toISOString(),
-    ai_response: response
-  };
+      // Get AI response
+      const response = await generateAIResponse(newEntry, category);
       
+      const entry = {
+        text: newEntry,
+        category,
+        timestamp: new Date().toISOString(),
+        ai_response: response
+      };
+        
       const { data, error } = await supabase
         .from('journal_entries')
         .insert([entry])
@@ -293,7 +282,7 @@ Respond as a helpful friend, not a therapist.`;
         <h1 className="text-3xl font-bold text-gray-800 mb-2">AI Journal & Idea Tracker</h1>
         <p className="text-gray-600">Your intelligent companion for capturing thoughts, ideas, and achievements</p>
         <div className="mt-2 text-sm text-gray-500">
-          {isGenerating ? "🤖 AI is thinking..." : "Powered by Ollama (llama3.2:3b) and Gemini 2.0 Flash"}
+          {isGenerating ? "🤖 AI is thinking..." : "Powered by Ollama (llama3.2:3b) & Gemini 1.5 Flash"}
         </div>
       </div>
 
@@ -361,7 +350,7 @@ Respond as a helpful friend, not a therapist.`;
           </button>
         </div>
         <div className="text-xs text-gray-500 mt-2">
-          Tip: Press Cmd/Ctrl + Enter to quick-add | Powered by local Ollama AI
+          Tip: Press Cmd/Ctrl + Enter to quick-add
         </div>
       </div>
 
@@ -441,20 +430,15 @@ Respond as a helpful friend, not a therapist.`;
               </div>
               
               <div className="bg-white bg-opacity-70 rounded-lg p-3 border border-gray-200">
-  <div className="flex items-start space-x-2">
-    {window.location.hostname === 'localhost' ? 
-      <span className="text-lg">🦙</span> : 
-      <span className="text-lg">💎</span>
-    }
-    <div>
-      <div className="text-xs font-medium text-indigo-900 mb-1">
-        {window.location.hostname === 'localhost' ? 'Llama Response' : 'Gemini Response'}
-      </div>
-      <p className="text-sm text-indigo-800">{entry.ai_response}</p>
-    </div>
-  </div>
-</div>
+                <div className="flex items-start space-x-2">
+                  {window.location.hostname === 'localhost' ? 
+                    <span className="text-lg">🦙</span> : 
+                    <span className="text-lg">💎</span>
+                  }
                   <div>
+                    <div className="text-xs font-medium text-indigo-900 mb-1">
+                      {window.location.hostname === 'localhost' ? 'Llama Response' : 'Gemini Response'}
+                    </div>
                     <p className="text-sm text-indigo-800">{entry.ai_response}</p>
                   </div>
                 </div>
