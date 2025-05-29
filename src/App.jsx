@@ -441,15 +441,20 @@ Respond as a helpful friend, not a therapist.`;
               </div>
               
               <div className="bg-white bg-opacity-70 rounded-lg p-3 border border-gray-200">
-                <div className="flex items-start space-x-2">
-{window.location.hostname === 'localhost' ? 
-  <span className="text-lg">🦙</span> : 
-  <span className="text-lg">💎</span>
-}
-                  <div>
-                    <div className="text-xs font-medium text-indigo-900 mb-1">
-{entry.ai_response?.startsWith('🦙') ? 'Llama Response' : 'AI Response'}
+  <div className="flex items-start space-x-2">
+    {window.location.hostname === 'localhost' ? 
+      <span className="text-lg">🦙</span> : 
+      <span className="text-lg">💎</span>
+    }
+    <div>
+      <div className="text-xs font-medium text-indigo-900 mb-1">
+        {window.location.hostname === 'localhost' ? 'Llama Response' : 'Gemini Response'}
+      </div>
+      <p className="text-sm text-indigo-800">{entry.ai_response}</p>
+    </div>
+  </div>
 </div>
+                  <div>
                     <p className="text-sm text-indigo-800">{entry.ai_response}</p>
                   </div>
                 </div>
