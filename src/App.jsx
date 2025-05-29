@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Lightbulb, Trophy, BookOpen, Brain, Search, Filter, Trash2 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Replace with your actual Supabase credentials
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ffyuw1wsyirtmlbnozpz.supabase.co';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'YOUR_LOCAL_KEY_HERE';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ffyuwiwsyirtmlbnozpz.supabase.co';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmeXV3aXdzeWlydG1sYm5venB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg1MzI5NDQsImV4cCI6MjA2NDEwODk0NH0.YZwIJhTi5YUaM22_u6HYbl7Y3QTdo09hOFwoDHQCSms';
 
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Initialize Gemini
+const genAI = import.meta.env.VITE_GEMINI_API_KEY ? 
+  new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY) : null;
 
 const AIJournal = () => {
   const [entries, setEntries] = useState([]);
@@ -75,10 +80,20 @@ useEffect(() => {
     return 'reflection';
   };
 
-  // Real AI responses using Ollama
-  const generateAIResponse = async (entry, category) => {
-    try {
-      const prompt = `You are an intelligent journal companion. A user just wrote this ${category} entry: "${entry}"
+  // Real AI responses using Llama (local) vs Gemini (cloud)
+const generateAIResponse = async (entry, category) => {
+  const isLocal = window.location.hostname === 'localhost';
+  
+  if (isLocal) {
+    return await generateOllamaResponse(entry, category);
+  } else {
+    return await generateGeminiResponse(entry, category);
+  }
+};
+
+const generateOllamaResponse = async (entry, category) => {
+  try {
+    const prompt = `You are an intelligent journal companion. A user just wrote this ${category} entry: "${entry}"
 
 Please provide a thoughtful, encouraging response that:
 - Acknowledges their ${category}
@@ -89,34 +104,63 @@ Please provide a thoughtful, encouraging response that:
 
 Respond as a helpful friend, not a therapist.`;
 
-      const response = await fetch('http://localhost:11434/api/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'llama3.2:3b',
-          prompt: prompt,
-          stream: false,
-          options: {
-            temperature: 0.7,
-            max_tokens: 150
-          }
-        })
-      });
+    const response = await fetch('http://localhost:11434/api/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama3.2:3b',
+        prompt: prompt,
+        stream: false,
+        options: {
+          temperature: 0.7,
+          max_tokens: 150
+        }
+      })
+    });
 
-      if (!response.ok) {
-        throw new Error('Ollama request failed');
-      }
+    if (!response.ok) {
+      throw new Error('Ollama request failed');
+    }
 
-      const data = await response.json();
-      return data.response || getFallbackResponse(category);
-      
-    } catch (error) {
-      console.error('Ollama error:', error);
+    const data = await response.json();
+    return data.response || getFallbackResponse(category);
+    
+  } catch (error) {
+    console.error('Ollama error:', error);
+    return getFallbackResponse(category);
+  }
+};
+
+const generateGeminiResponse = async (entry, category) => {
+  try {
+    if (!genAI) {
       return getFallbackResponse(category);
     }
-  };
+
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    
+    const prompt = `You are an intelligent journal companion. A user just wrote this ${category} entry: "${entry}"
+
+Please provide a thoughtful, encouraging response that:
+- Acknowledges their ${category}
+- Asks 1-2 insightful follow-up questions
+- Offers practical suggestions or perspectives
+- Keeps it conversational and supportive
+- Limit response to 2-3 sentences
+
+Respond as a helpful friend, not a therapist.`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text() || getFallbackResponse(category);
+    
+  } catch (error) {
+    console.error('Gemini error:', error);
+    return getFallbackResponse(category);
+  }
+};
 
   // Fallback responses if Ollama is unavailable
   const getFallbackResponse = (category) => {
