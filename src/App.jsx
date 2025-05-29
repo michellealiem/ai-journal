@@ -3,8 +3,8 @@ import { PlusCircle, Lightbulb, Trophy, BookOpen, Brain, Search, Filter, Trash2 
 import { createClient } from '@supabase/supabase-js';
 
 // Replace with your actual Supabase credentials
-const supabaseUrl = 'https://ffyuwiwsyirtmlbnozpz.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmeXV3aXdzeWlydG1sYm5venB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg1MzI5NDQsImV4cCI6MjA2NDEwODk0NH0.YZwIJhTi5YUaM22_u6HYbl7Y3QTdo09hOFwoDHQCSms';  // Replace with your actual key
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ffyuw1wsyirtmlbnozpz.supabase.co';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'YOUR_LOCAL_KEY_HERE';
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
