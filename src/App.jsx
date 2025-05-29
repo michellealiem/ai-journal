@@ -442,13 +442,13 @@ Respond as a helpful friend, not a therapist.`;
               
               <div className="bg-white bg-opacity-70 rounded-lg p-3 border border-gray-200">
                 <div className="flex items-start space-x-2">
-                  {(entry.ai_response?.length > 100 && !entry.ai_response?.includes('🎉') && !entry.ai_response?.includes('💡')) ? 
+{window.location.hostname === 'localhost' ? 
   <span className="text-lg">🦙</span> : 
-  <Brain className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
+  <span className="text-lg">💎</span>
 }
                   <div>
                     <div className="text-xs font-medium text-indigo-900 mb-1">
-  {entry.ai_response?.startsWith('🦙') ? 'Llama Response' : 'AI Response'}
+{entry.ai_response?.startsWith('🦙') ? 'Llama Response' : 'AI Response'}
 </div>
                     <p className="text-sm text-indigo-800">{entry.ai_response}</p>
                   </div>
